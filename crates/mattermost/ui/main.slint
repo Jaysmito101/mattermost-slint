@@ -1,6 +1,8 @@
-import { Store } from "store.slint";
+import { Store, AppPage, CurrentPopup } from "store.slint";
 import { VerticalBox } from "std-widgets.slint";
 import { LoginPage } from "pages/login-page.slint";
+import { LoadingPopup } from "popups/loading-popup.slint";
+import { MessageBoxPopup } from "popups/messagebox-popup.slint";
 
 export component Main inherits Window {
     title: "Mattermost - GUI";
@@ -8,12 +10,30 @@ export component Main inherits Window {
     preferred-width: 800px;
     preferred-height: 600px;
 
-    VerticalLayout {
+    if Store.currentPage == AppPage.LoginPage: LoginPage {
+        data <=> Store.loginPage;
+    }
+
+    if Store.currentPopup == CurrentPopup.Loading: Rectangle {
         width: 100%;
         height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        
+        LoadingPopup {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+    }
 
-        LoginPage {
-            data <=> Store.loginPage;
+    if Store.currentPopup == CurrentPopup.MessageBox: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        
+        MessageBoxPopup {
+            data: Store.messageBoxData;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
         }
     }
 

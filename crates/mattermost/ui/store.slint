@@ -4,6 +4,12 @@ export enum AppPage {
   SettingsPage,
 }
 
+export enum CurrentPopup {
+  None,
+  Loading,
+  MessageBox,
+}
+
 export struct LoginPageStore {
   username: string,
   password: string,
@@ -11,7 +17,16 @@ export struct LoginPageStore {
   server_url: string,
 }
 
+export struct MessageBoxData {
+  title: string,
+  message: string,
+  is_error: bool,
+}
+
 export global Store {
   in property <AppPage> currentPage: AppPage.LoginPage;
+  in-out property <CurrentPopup> currentPopup: CurrentPopup.None;
+  
   in-out property <LoginPageStore> loginPage;
+  in-out property <MessageBoxData> messageBoxData;
 }
