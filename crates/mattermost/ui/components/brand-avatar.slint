@@ -1,0 +1,22 @@
+export component BrandAvatar inherits Rectangle {
+    in property <string> label: "W";
+    in property <length> size: 64px;
+    in property <brush> fill: @linear-gradient(135deg, #575757, #2f2f2f);
+    in property <color> text-color: #f4f4f4;
+    in property <length> font-size: 28px;
+    in property <int> font-weight: 700;
+
+    width: size;
+    height: size;
+    border-radius: size / 2;
+    background: fill;
+
+    Text {
+        text: root.label;
+        color: root.text-color;
+        font-size: root.font-size;
+        font-weight: root.font-weight;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

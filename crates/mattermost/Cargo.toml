@@ -1,0 +1,15 @@
+[package]
+name = "mattermost"
+version = "0.1.0"
+edition = "2024"
+authors = ["Jaysmito Mukherjee <jaysmito101@gmail.com>"]
+
+[dependencies]
+env_logger.workspace = true
+log.workspace = true
+slint.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[build-dependencies]
+slint-build.workspace = true

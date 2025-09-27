@@ -1,0 +1,17 @@
+export enum AppPage {
+  LoginPage,
+  ChatPage,
+  SettingsPage,
+}
+
+export struct LoginPageStore {
+  username: string,
+  password: string,
+  remember_me: bool,
+  server_url: string,
+}
+
+export global Store {
+  in property <AppPage> currentPage: AppPage.LoginPage;
+  in-out property <LoginPageStore> loginPage;
+}

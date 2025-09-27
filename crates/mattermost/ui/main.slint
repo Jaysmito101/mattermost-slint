@@ -1,0 +1,19 @@
+import { Store } from "store.slint";
+import { VerticalBox } from "std-widgets.slint";
+import { LoginPage } from "pages/login-page.slint";
+
+export component Main inherits Window {
+    title: "Mattermost - GUI";
+
+    preferred-width: 800px;
+    preferred-height: 600px;
+
+    VerticalLayout {
+        width: 100%;
+        height: 100%;
+
+        LoginPage {
+        }
+    }
+
+}

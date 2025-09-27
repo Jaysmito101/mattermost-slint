@@ -1,0 +1,25 @@
+[workspace]
+members = ["crates/mattermost"]
+
+[workspace.dependencies]
+anyhow = "1.0.100"
+api = { path = "crates/api" }
+cgmath = "0.18.0"
+core = { path = "crates/core" }
+dirs = "6.0.0"
+env_logger = "0.11.8"
+flume = "0.11.1"
+log = "0.4.28"
+mattermost = { path = "crates/mattermost" }
+reqwest = "0.12.23"
+serde = "1.0.228"
+serde_json = "1.0.145"
+slint = "1.13.1"
+slint-build = "1.13.1"
+smol = "2.0.2"
+strum = "0.27.2"
+strum_macros = "0.27.2"
+thiserror = "2.0.16"
+tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread", "sync"] }
+
+[workspace.metadata]

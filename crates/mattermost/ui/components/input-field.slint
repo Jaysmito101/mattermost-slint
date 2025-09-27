@@ -1,0 +1,59 @@
+export component InputField inherits Rectangle {
+    in property <string> placeholder: "";
+    in property <bool> is-password: false;
+    in property <brush> background-brush: #262626;
+    in property <brush> border-brush: #3a3a3a;
+    in property <brush> focus-border-brush: #5a5a5a;
+    in property <color> text-color: #f4f4f4;
+    in property <brush> icon-background: #343434;
+    in property <color> icon-color: #bfbfbf;
+    in-out property <string> text <=> field.text;
+
+    width: 100%;
+    height: 56px;
+    border-radius: 28px;
+    background: background-brush;
+    border-width: 1px;
+    border-color: field.has-focus ? focus-border-brush : border-brush;
+
+    Rectangle {
+        width: 40px;
+        height: 40px;
+        x: 8px;
+        y: (parent.height - self.height) / 2;
+        border-radius: 20px;
+        background: icon-background;
+
+        Rectangle {
+            width: 12px;
+            height: 12px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: 6px;
+            background: icon-color;
+        }
+    }
+
+    placeholder-text := Text {
+        x: 60px;
+        width: parent.width - self.x - 20px;
+        height: parent.height;
+        text: placeholder;
+        color: #a5a5a5;
+        font-size: 16px;
+        vertical-alignment: center;
+        horizontal-alignment: left;
+        opacity: field.text == "" ? 1.0 : 0.0;
+    }
+
+    field := TextInput {
+        x: 60px;
+        width: parent.width - self.x - 20px;
+        height: parent.height;
+        color: text-color;
+        font-size: 16px;
+        vertical-alignment: center;
+        horizontal-alignment: left;
+        input-type: is-password ? InputType.password : InputType.text;
+    }
+}
