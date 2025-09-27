@@ -2,20 +2,21 @@ import { CheckBox } from "std-widgets.slint";
 import { BrandAvatar } from "../components/brand-avatar.slint";
 import { InputField } from "../components/input-field.slint";
 import { PrimaryButton } from "../components/primary-button.slint";
+import { LoginPageStore } from "../store.slint";
 
 export component LoginPage inherits Rectangle {
     width: 100%;
     height: 100%;
     background: @linear-gradient(180deg, #2a2a2a, #181818);
-
     property <length> side-padding: 32px;
-
+    in-out property <LoginPageStore> data;
+    callback callback-login-clicked();
+    callback callback-forgot-password-clicked();
     form := Rectangle {
         width: min(420px, parent.width - side-padding * 2);
         x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2;
         background: transparent;
-
         logo := BrandAvatar {
             size: 56px;
             x: (parent.width - self.width) / 2;
@@ -37,6 +38,10 @@ export component LoginPage inherits Rectangle {
             x: side-padding;
             width: parent.width - side-padding * 2;
             y: heading.y + heading.preferred-height + 24px;
+            text: root.data.username;
+            callback-text-edited(new_text) => {
+                root.data.username = new_text;
+            }
         }
 
         passwordField := InputField {
@@ -45,21 +50,46 @@ export component LoginPage inherits Rectangle {
             x: emailField.x;
             width: emailField.width;
             y: emailField.y + emailField.height + 16px;
+            text: root.data.password;
+            callback-text-edited(new_text) => {
+                root.data.password = new_text;
+            }
+        }
+
+        serverField := InputField {
+            placeholder: "Server URL...";
+            x: emailField.x;
+            width: emailField.width;
+            y: passwordField.y + passwordField.height + 16px;
+            text: root.data.server_url;
+            callback-text-edited(new_text) => {
+                root.data.server_url = new_text;
+            }
         }
 
         metaRow := Rectangle {
             x: emailField.x;
             width: emailField.width;
-            y: passwordField.y + passwordField.height + 16px;
+            y: serverField.y + serverField.height + 16px;
             height: 28px;
             background: transparent;
-
             CheckBox {
                 text: "Remember me";
+                checked: root.data.remember_me;
                 y: (parent.height - self.height) / 2;
+                toggled => {
+                    root.data.remember_me = self.checked;
+                }
             }
 
-            Text {
+            TouchArea {
+                width: forgot-text.width;
+                height: parent.height;
+                x: parent.width - self.width;
+                clicked => { root.callback-forgot-password-clicked(); }
+            }
+
+            forgot-text := Text {
                 text: "Forgot password?";
                 font-size: 14px;
                 font-weight: 500;
@@ -74,6 +104,7 @@ export component LoginPage inherits Rectangle {
             x: emailField.x;
             width: emailField.width;
             y: metaRow.y + metaRow.height + 24px;
+            callback-clicked => { root.callback-login-clicked(); }
         }
 
         height: submitButton.y + submitButton.height;

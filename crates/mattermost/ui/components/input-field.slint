@@ -8,6 +8,7 @@ export component InputField inherits Rectangle {
     in property <brush> icon-background: #343434;
     in property <color> icon-color: #bfbfbf;
     in-out property <string> text <=> field.text;
+    callback callback-text-edited(string);
 
     width: 100%;
     height: 56px;
@@ -55,5 +56,6 @@ export component InputField inherits Rectangle {
         vertical-alignment: center;
         horizontal-alignment: left;
         input-type: is-password ? InputType.password : InputType.text;
+        edited => { root.callback-text-edited(field.text); }
     }
 }

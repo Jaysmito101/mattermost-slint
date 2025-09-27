@@ -4,7 +4,7 @@ export component PrimaryButton inherits Rectangle {
     in property <color> text-color: #f5f5f5;
     in property <length> corner-radius: 26px;
     in property <length> button-height: 52px;
-    callback clicked;
+    callback callback-clicked;
 
     width: 100%;
     height: button-height;
@@ -32,6 +32,6 @@ export component PrimaryButton inherits Rectangle {
     touch := TouchArea {
         width: parent.width;
         height: parent.height;
-        clicked => { root.clicked(); }
+        clicked => { root.callback-clicked(); }
     }
 }
