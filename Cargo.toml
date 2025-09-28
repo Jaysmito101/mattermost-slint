@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/mattermost"]
+members = ["crates/macros", "crates/mattermost"]
 
 [workspace.dependencies]
 anyhow = "1.0.100"
@@ -10,7 +10,9 @@ dirs = "6.0.0"
 env_logger = "0.11.8"
 flume = "0.11.1"
 log = "0.4.28"
+macros = { path = "crates/macros" }
 mattermost = { path = "crates/mattermost" }
+quote = "1.0.36"
 reqwest = "0.12.23"
 serde = "1.0.228"
 serde_json = "1.0.145"
@@ -19,6 +21,7 @@ slint-build = "1.13.1"
 smol = "2.0.2"
 strum = "0.27.2"
 strum_macros = "0.27.2"
+syn = "2.0.106"
 thiserror = "2.0.16"
 tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread", "sync"] }
 
