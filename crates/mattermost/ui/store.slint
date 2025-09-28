@@ -10,7 +10,7 @@ export enum CurrentPopup {
   MessageBox,
 }
 
-export struct LoginPageStore {
+export struct LoginPageData {
   username: string,
   password: string,
   remember_me: bool,
@@ -23,10 +23,16 @@ export struct MessageBoxData {
   is_error: bool,
 }
 
-export global Store {
+export global LoginPageStore {
+    in-out property <LoginPageData> data;
+
+    callback login-clicked();
+    callback forgot-password-clicked();
+}
+
+export global NavStore {
   in property <AppPage> currentPage: AppPage.LoginPage;
   in-out property <CurrentPopup> currentPopup: CurrentPopup.None;
   
-  in-out property <LoginPageStore> loginPage;
   in-out property <MessageBoxData> messageBoxData;
-}
+} 

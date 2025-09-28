@@ -8,4 +8,8 @@ pub enum Error {
     InvalidParamError(String),
     #[error("Slint Error: {0}")]
     SlintError(slint::PlatformError),
+    #[error("UI Upgrade Failed Error")]
+    UiUpgradeFailed,
+    #[error("Channel Error")]
+    ChannelError,
 }

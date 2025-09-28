@@ -1,7 +1,10 @@
+slint::include_modules!();
+
 mod common;
 pub use common::*;
 
-slint::include_modules!();
+pub mod services;
+pub mod viewmodels;
 
 pub async fn initialize() -> Result<(), crate::Error> {
     env_logger::builder()
@@ -12,11 +15,15 @@ pub async fn initialize() -> Result<(), crate::Error> {
 }
 
 pub async fn run() -> Result<(), crate::Error> {
-    log::warn!("Hello World!");
-
     let ui = Main::new().map_err(crate::Error::SlintError)?;
 
+    let app_services = crate::services::initialize(ui.as_weak()).await?;
+    let app_view_models = crate::viewmodels::initialize(ui.as_weak()).await?;
+    
     ui.run().map_err(crate::Error::SlintError)?;
+
+    drop(app_view_models);
+    drop(app_services);
 
     Ok(())
 }

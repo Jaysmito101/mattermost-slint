@@ -6,7 +6,9 @@ authors = ["Jaysmito Mukherjee <jaysmito101@gmail.com>"]
 
 [dependencies]
 env_logger.workspace = true
+flume.workspace = true
 log.workspace = true
+macros.workspace = true
 slint.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
