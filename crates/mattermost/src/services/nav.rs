@@ -1,8 +1,7 @@
 use slint::ComponentHandle;
 
-#[derive(Debug, Clone)]
 pub enum NavigationApiCommand {
-    UpdateLoader(bool, flume::Sender<()>),
+    UpdateLoader(bool, Option<Box<dyn FnOnce(&mut crate::Main) + Send>>),
 }
 
 #[derive(Debug, Clone)]
@@ -20,17 +19,10 @@ impl NavigationApi {
         self.commands.0.send(command).map_err(|_|crate::Error::ChannelError)
     }
 
-    pub async fn update_loader(&self, show: bool) -> Result<(), crate::Error> {
-        let (sender, receiver) = flume::bounded(1);
-        self.send_command(NavigationApiCommand::UpdateLoader(show, sender))?;
-        log::warn!("Sent update_loader command, waiting for response");
-        receiver.recv_async().await.map_err(|_|crate::Error::ChannelError)?;
-        log::warn!("Received response for update_loader command");
+    pub fn update_loader(&self, show: bool, callback: Option<impl 'static + FnOnce(&mut crate::Main) + Send>) -> Result<(), crate::Error>
+    {
+        self.send_command(NavigationApiCommand::UpdateLoader(show, callback.map(|cb| Box::new(cb) as Box<dyn FnOnce(&mut crate::Main) + Send>)))?;
         Ok(())
-    }
-
-    pub async fn hide_loader(&self) -> Result<(), crate::Error> {
-        self.update_loader(false).await
     }
 }
 
@@ -53,10 +45,12 @@ impl NavigationService {
             while let Ok(command) = navigation.commands.1.recv_async().await {
                 match command {
                     NavigationApiCommand::UpdateLoader(show, responder) => {
-                        ui.upgrade_in_event_loop(move |ui| {
+                        ui.upgrade_in_event_loop(move |mut ui| {
                             let store = ui.global::<crate::NavStore>();
                             store.set_currentPopup(if show { crate::CurrentPopup::Loading } else { crate::CurrentPopup::None });
-                            responder.send(()).ok();
+                            if let Some(cb) = responder {
+                                cb(&mut ui);
+                            }
                         }).ok();
                     }
                 }

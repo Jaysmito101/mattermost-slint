@@ -7,6 +7,9 @@ pub use nav::*;
 mod web;
 pub use web::*;
 
+mod events;
+pub use events::*;
+
 #[derive(Debug, Clone, macros::Getters)]
 pub struct ServicesApi {
     navigation: NavigationApi,
