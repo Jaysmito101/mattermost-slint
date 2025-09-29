@@ -1,7 +1,5 @@
 #[derive(Debug, Clone)]
-pub struct WebApi {
-
-}
+pub struct WebApi {}
 
 impl WebApi {
     pub fn new() -> Self {

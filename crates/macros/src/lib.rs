@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, parse_macro_input};
 use std::collections::HashSet;
+use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_derive(Getters)]
 pub fn derive_getters(input: TokenStream) -> TokenStream {
@@ -15,13 +15,13 @@ pub fn derive_getters(input: TokenStream) -> TokenStream {
     };
 
     let mod_name = quote::format_ident!("Trait{}", name.to_string());
-    
+
     let mut trait_impls = Vec::new();
 
     for field in fields {
         let ty = &field.ty;
         let ident = field.ident.as_ref().expect("Expected named fields");
-        
+
         trait_impls.push(quote! {
             impl #mod_name::GetterTrait<#ty> for #name {
                 fn get_field(&self) -> &#ty {
@@ -47,19 +47,19 @@ pub fn derive_getters(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         mod #mod_name {
             use super::*;
-            
+
             pub(crate) trait GetterTrait<T> {
                 fn get_field(&self) -> &T;
             }
-            
+
             pub(crate) trait Gettable {}
-            
+
             #(#gettable_impls)*
         }
 
         impl #name {
             pub(crate) fn get<T>(&self) -> &T
-            where 
+            where
                 Self: #mod_name::GetterTrait<T>,
                 T: #mod_name::Gettable,
             {
@@ -68,7 +68,7 @@ pub fn derive_getters(input: TokenStream) -> TokenStream {
             }
         }
 
-        
+
         #(#trait_impls)*
     };
 

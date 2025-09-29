@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Events { 
-    Dummy
+pub enum Events {
+    Dummy,
 }
 
 #[derive(Clone, Debug)]
 pub enum EventsData {
-    Dummy
+    Dummy,
 }
 
 pub enum EventsApiCommand {
@@ -17,7 +17,10 @@ pub enum EventsApiCommand {
 
 #[derive(Debug, Clone)]
 pub struct EventsApi {
-    commands: (flume::Sender<EventsApiCommand>, flume::Receiver<EventsApiCommand>),
+    commands: (
+        flume::Sender<EventsApiCommand>,
+        flume::Receiver<EventsApiCommand>,
+    ),
 }
 
 impl EventsApi {
@@ -27,10 +30,17 @@ impl EventsApi {
     }
 
     fn send_command(&self, command: EventsApiCommand) -> Result<(), crate::Error> {
-        self.commands.0.send(command).map_err(|_|crate::Error::ChannelError)
+        self.commands
+            .0
+            .send(command)
+            .map_err(|_| crate::Error::ChannelError)
     }
 
-    pub fn subscribe(&self, event: Events, callback: impl Fn(&EventsData) + 'static + Send) -> Result<(), crate::Error> {
+    pub fn subscribe(
+        &self,
+        event: Events,
+        callback: impl Fn(&EventsData) + 'static + Send,
+    ) -> Result<(), crate::Error> {
         self.send_command(EventsApiCommand::Subscribe(event, Box::new(callback)))?;
         Ok(())
     }
@@ -61,7 +71,7 @@ impl EventsService {
                 match command {
                     EventsApiCommand::Subscribe(event, callback) => {
                         callbacks.entry(event).or_default().push(callback);
-                    },
+                    }
                     EventsApiCommand::Post(event, data) => {
                         if let Some(cbs) = callbacks.get(&event) {
                             for cb in cbs {
@@ -73,5 +83,4 @@ impl EventsService {
             }
         });
     }
-
 }

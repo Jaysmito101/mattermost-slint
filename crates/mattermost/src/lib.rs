@@ -17,13 +17,9 @@ pub async fn initialize() -> Result<(), crate::Error> {
 pub async fn run() -> Result<(), crate::Error> {
     let ui = Main::new().map_err(crate::Error::SlintError)?;
 
-    let app_services = crate::services::initialize(ui.as_weak()).await?;
-    let app_view_models = crate::viewmodels::initialize(ui.as_weak()).await?;
-    
+    let _app_services = crate::services::initialize(ui.as_weak()).await?;
+    let _app_view_models = crate::viewmodels::initialize(ui.as_weak()).await?;
+
     ui.run().map_err(crate::Error::SlintError)?;
-
-    drop(app_view_models);
-    drop(app_services);
-
     Ok(())
 }
