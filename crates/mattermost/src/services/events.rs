@@ -33,7 +33,7 @@ impl EventsApi {
         Self { commands }
     }
 
-    pub fn send_command(&self, command: EventsApiCommand) -> Result<(), crate::Error> {
+    fn send_command(&self, command: EventsApiCommand) -> Result<(), crate::Error> {
         self.commands
             .0
             .send(command)

@@ -1,8 +1,7 @@
-#[derive(Debug, Clone)]
-pub struct WebApi {}
+pub mod types;
+pub mod api;
+pub mod service;
 
-impl WebApi {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+pub use types::*;
+pub use api::*;
+pub use service::*;

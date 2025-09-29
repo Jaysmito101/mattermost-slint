@@ -12,9 +12,9 @@ pub use events::*;
 
 #[derive(Debug, Clone, macros::Getters)]
 pub struct ServicesApi {
-    navigation: NavigationApi,
-    events: EventsApi,
-    web: WebApi,
+    pub navigation: NavigationApi,
+    pub events: EventsApi,
+    pub web: WebApi,
 }
 
 impl ServicesApi {
@@ -31,12 +31,22 @@ impl ServicesApi {
 pub struct Services {
     navigation: NavigationService,
     events: EventsService,
+    web: WebService,
+    api: ServicesApi,
+}
+
+impl Services {
+    pub fn api(&self) -> &ServicesApi {
+        &self.api
+    }
 }
 
 pub async fn initialize(ui: Weak<crate::Main>) -> Result<Arc<Services>, crate::Error> {
-    let service_api = ServicesApi::new();
-    let navigation = service_api.navigation.clone().start_service(ui)?;
-    let events = service_api.events.clone().start_service()?;
+    let api = ServicesApi::new();
 
-    Ok(Arc::new(Services { navigation, events }))
+    let navigation = api.navigation.clone().start_service(ui)?;
+    let events = api.events.clone().start_service()?;
+    let web = api.web.clone().start_service()?;
+
+    Ok(Arc::new(Services { navigation, events, web, api }))
 }

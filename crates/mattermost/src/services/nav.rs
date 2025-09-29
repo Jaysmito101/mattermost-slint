@@ -1,7 +1,7 @@
 use slint::ComponentHandle;
 
 pub enum NavigationApiCommand {
-    UpdateLoader(bool, Option<Box<dyn FnOnce(&mut crate::Main) + Send>>),
+    UpdateLoader(bool),
 }
 
 #[derive(Debug, Clone)]
@@ -23,7 +23,7 @@ impl NavigationApi {
         Self { commands }
     }
 
-    pub fn send_command(&self, command: NavigationApiCommand) -> Result<(), crate::Error> {
+    fn send_command(&self, command: NavigationApiCommand) -> Result<(), crate::Error> {
         self.commands
             .0
             .send(command)
@@ -33,11 +33,9 @@ impl NavigationApi {
     pub fn update_loader(
         &self,
         show: bool,
-        callback: Option<impl 'static + FnOnce(&mut crate::Main) + Send>,
     ) -> Result<(), crate::Error> {
         self.send_command(NavigationApiCommand::UpdateLoader(
             show,
-            callback.map(|cb| Box::new(cb) as Box<dyn FnOnce(&mut crate::Main) + Send>),
         ))?;
         Ok(())
     }
@@ -56,17 +54,14 @@ impl NavigationApi {
         tokio::task::spawn(async move {
             while let Ok(command) = navigation.commands.1.recv_async().await {
                 match command {
-                    NavigationApiCommand::UpdateLoader(show, responder) => {
-                        ui.upgrade_in_event_loop(move |mut ui| {
+                    NavigationApiCommand::UpdateLoader(show) => {
+                        ui.upgrade_in_event_loop(move |ui| {
                             let store = ui.global::<crate::NavStore>();
                             store.set_currentPopup(if show {
                                 crate::CurrentPopup::Loading
                             } else {
                                 crate::CurrentPopup::None
                             });
-                            if let Some(cb) = responder {
-                                cb(&mut ui);
-                            }
                         })
                         .ok();
                     }
