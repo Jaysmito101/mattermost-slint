@@ -23,13 +23,17 @@ pub struct EventsApi {
     ),
 }
 
+pub struct EventsService {
+    pub events: EventsApi,
+}
+
 impl EventsApi {
     pub fn new() -> Self {
         let commands = flume::unbounded();
         Self { commands }
     }
 
-    fn send_command(&self, command: EventsApiCommand) -> Result<(), crate::Error> {
+    pub fn send_command(&self, command: EventsApiCommand) -> Result<(), crate::Error> {
         self.commands
             .0
             .send(command)
@@ -49,19 +53,15 @@ impl EventsApi {
         self.send_command(EventsApiCommand::Post(event, data))?;
         Ok(())
     }
-}
 
-pub struct EventsService {
-    events: EventsApi,
-}
+    pub fn start_service(
+        self,
+    ) -> Result<EventsService, crate::Error> {
+        let events = self.clone();
 
-impl EventsService {
-    pub async fn new(events: EventsApi) -> Result<Self, crate::Error> {
-        Ok(Self { events })
-    }
-
-    pub fn start(&self) {
-        let events = self.events.clone();
+        let events_service = EventsService {
+            events: self,
+        };
 
         // Could also be a std::thread::spawn?
         tokio::task::spawn(async move {
@@ -82,5 +82,7 @@ impl EventsService {
                 }
             }
         });
+
+        Ok(events_service)
     }
 }
