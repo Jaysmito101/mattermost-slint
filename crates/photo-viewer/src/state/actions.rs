@@ -13,8 +13,6 @@ pub enum StateAction {
 #[derive(Clone, Debug)]
 pub enum NavigationAction {
     NavigateTo(Page),
-    GoBack,
-    ClearHistory,
 }
 
 /// Photo actions
@@ -43,10 +41,6 @@ pub enum UiAction {
 impl StateAction {
     pub fn navigate_to(page: Page) -> Self {
         StateAction::Navigation(NavigationAction::NavigateTo(page))
-    }
-
-    pub fn go_back() -> Self {
-        StateAction::Navigation(NavigationAction::GoBack)
     }
 
     pub fn set_album_path(path: PathBuf) -> Self {

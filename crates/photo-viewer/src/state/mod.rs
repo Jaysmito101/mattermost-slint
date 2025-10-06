@@ -14,19 +14,9 @@ pub struct AppState {
     pub ui: UiState,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NavigationState {
     pub current_page: Page,
-    pub history: Vec<Page>,
-}
-
-impl Default for NavigationState {
-    fn default() -> Self {
-        Self {
-            current_page: Page::Welcome,
-            history: Vec::new(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -34,7 +24,6 @@ pub struct PhotoState {
     pub album_path: Option<PathBuf>,
     pub photos: Vec<PhotoInfo>,
     pub current_index: usize,
-    // Note: Use UiState::is_loading for loading indicators
 }
 
 #[derive(Clone, Debug)]
@@ -93,7 +82,6 @@ struct StoreInner {
     next_id: AtomicUsize,
 }
 
-// Use Arc instead of Box to make it cloneable (prevents deadlock in dispatch)
 type Subscriber = Arc<dyn Fn(Arc<AppState>) + Send + Sync>;
 
 impl Store {
@@ -173,21 +161,10 @@ impl Store {
             NavigationAction::NavigateTo(page) => {
                 if state.current_page != page {
                     tracing::info!("Navigation: {:?} → {:?}", state.current_page, page);
-                    state.history.push(state.current_page.clone());
                     state.current_page = page;
                 } else {
                     tracing::debug!("Navigation: Already on {:?}, skipping", page);
                 }
-            }
-            NavigationAction::GoBack => {
-                if let Some(page) = state.history.pop() {
-                    tracing::info!("Navigation: Going back to {:?}", page);
-                    state.current_page = page;
-                }
-            }
-            NavigationAction::ClearHistory => {
-                tracing::info!("Navigation: Clearing history");
-                state.history.clear();
             }
         }
     }

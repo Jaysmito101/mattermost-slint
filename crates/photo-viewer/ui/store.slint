@@ -26,7 +26,6 @@ export struct AlbumData {
 
 // ============================================================================
 // DATA STORES (Updated by UiBridge ONLY)
-// Single source of truth - synced from Rust Store
 // ============================================================================
 
 // Global navigation store
@@ -45,7 +44,6 @@ export global PhotoStore {
 
 // ============================================================================
 // PAGE CALLBACK STORES (Wire UI events to ViewModels)
-// ONLY callbacks - no state
 // ============================================================================
 
 // Welcome page callbacks
@@ -56,7 +54,7 @@ export global WelcomePageStore {
 // Import page callbacks
 export global ImportPageStore {
     callback browse_clicked();
-    callback load_clicked(string);  // Pass album_path from UI
+    callback load_clicked(string);
     callback back_clicked();
 }
 

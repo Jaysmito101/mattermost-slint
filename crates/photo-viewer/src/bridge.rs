@@ -72,6 +72,7 @@ impl UiBridge {
             });
         }
 
+        // TODO: In production, use VirtualList or ModelNotify for efficient updates
         // Update photos list
         let photos: Vec<crate::PhotoData> = state
             .photos
