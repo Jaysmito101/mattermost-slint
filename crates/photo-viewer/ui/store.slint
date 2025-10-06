@@ -1,0 +1,75 @@
+// ============================================================================
+// DATA TYPES
+// ============================================================================
+
+// Page enumeration
+export enum AppPage {
+    Welcome,
+    Import,
+    Grid,
+    Loupe,
+}
+
+// Photo data structure
+export struct PhotoData {
+    filename: string,
+    path: string,
+    index: int,
+}
+
+// Album data
+export struct AlbumData {
+    path: string,
+    photo_count: int,
+}
+
+
+// ============================================================================
+// DATA STORES (Updated by UiBridge ONLY)
+// ============================================================================
+
+// Global navigation store
+export global NavStore {
+    in-out property <AppPage> current_page: AppPage.Welcome;
+    in-out property <bool> is_loading: false;
+    in-out property <string> error_message: "";
+}
+
+// Global photo store
+export global PhotoStore {
+    in-out property <AlbumData> album: { path: "", photo_count: 0 };
+    in-out property <[PhotoData]> photos: [];
+    in-out property <int> current_index: 0;
+}
+
+// ============================================================================
+// PAGE CALLBACK STORES (Wire UI events to ViewModels)
+// ============================================================================
+
+// Welcome page callbacks
+export global WelcomePageStore {
+    callback start_clicked();
+}
+
+// Import page callbacks
+export global ImportPageStore {
+    callback browse_clicked();
+    callback load_clicked(string);
+    callback back_clicked();
+}
+
+// Grid page callbacks
+export global GridPageStore {
+    // Callbacks
+    callback photo_clicked(int);
+    callback back_clicked();
+    callback reimport_clicked();
+}
+
+// Loupe page callbacks
+export global LoupePageStore {
+    callback back_clicked();
+    callback prev_clicked();
+    callback next_clicked();
+}
+

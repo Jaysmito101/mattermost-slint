@@ -1,0 +1,108 @@
+import { VerticalBox } from "std-widgets.slint";
+import { NavStore, PhotoStore, WelcomePageStore, ImportPageStore, GridPageStore, LoupePageStore, AppPage } from "store.slint";
+import { WelcomePage } from "pages/welcome.slint";
+import { ImportPage } from "pages/import.slint";
+import { GridPage } from "pages/grid.slint";
+import { LoupePage } from "pages/loupe.slint";
+
+export component Main inherits Window {
+    title: "Photo Viewer";
+    
+    preferred-width: 1200px;
+    preferred-height: 800px;
+    
+    // Welcome Page
+    if NavStore.current_page == AppPage.Welcome: WelcomePage {
+        start-clicked => {
+            WelcomePageStore.start_clicked();
+        }
+    }
+    
+    // Import Page
+    if NavStore.current_page == AppPage.Import: ImportPage {
+        album_path: PhotoStore.album.path;
+        photo_count: PhotoStore.album.photo_count;
+        
+        browse-clicked => {
+            ImportPageStore.browse_clicked();
+        }
+        
+        load-clicked => {
+            // Pass album_path from UI to ViewModel
+            ImportPageStore.load_clicked(PhotoStore.album.path);
+        }
+        
+        back-clicked => {
+            ImportPageStore.back_clicked();
+        }
+    }
+    
+    // Grid Page
+    if NavStore.current_page == AppPage.Grid: GridPage {
+        photos: PhotoStore.photos;
+        current_index: PhotoStore.current_index;
+        
+        photo-clicked(index) => {
+            GridPageStore.photo_clicked(index);
+        }
+        
+        back-clicked => {
+            GridPageStore.back_clicked();
+        }
+        
+        reimport-clicked => {
+            GridPageStore.reimport_clicked();
+        }
+    }
+    
+    // Loupe Page
+    if NavStore.current_page == AppPage.Loupe: LoupePage {
+        current_photo: PhotoStore.current_index < PhotoStore.photos.length 
+            ? PhotoStore.photos[PhotoStore.current_index]
+            : { filename: "", path: "", index: 0 };
+        total_photos: PhotoStore.photos.length;
+        has_prev: PhotoStore.current_index > 0;
+        has_next: PhotoStore.current_index < PhotoStore.photos.length - 1;
+        
+        back-clicked => {
+            LoupePageStore.back_clicked();
+        }
+        
+        prev-clicked => {
+            LoupePageStore.prev_clicked();
+        }
+        
+        next-clicked => {
+            LoupePageStore.next_clicked();
+        }
+    }
+    
+    // Loading overlay
+    if NavStore.is_loading: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        
+        Rectangle {
+            width: 200px;
+            height: 100px;
+            background: white;
+            border-radius: 8px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            
+            VerticalBox {
+                alignment: center;
+                
+                Text {
+                    text: "Loading...";
+                    font-size: 18px;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+    }
+}
+
+export { NavStore, PhotoStore, WelcomePageStore, ImportPageStore, GridPageStore, LoupePageStore }
+

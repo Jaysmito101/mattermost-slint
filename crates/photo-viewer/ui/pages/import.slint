@@ -1,0 +1,119 @@
+import { VerticalBox, HorizontalBox, Button, LineEdit } from "std-widgets.slint";
+
+export component ImportPage {
+    in-out property <string> album_path: "";
+    in-out property <int> photo_count: 0;
+    
+    callback browse-clicked();
+    callback load-clicked();
+    callback back-clicked();
+    
+    VerticalBox {
+        padding: 20px;
+        spacing: 20px;
+        
+        // Header
+        HorizontalBox {
+            Button {
+                text: "← Back";
+                clicked => { back-clicked(); }
+            }
+            
+            Rectangle { horizontal-stretch: 1; }
+            
+            Text {
+                text: "Import Album";
+                font-size: 24px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            
+            Rectangle { horizontal-stretch: 1; }
+            Rectangle { width: 80px; } // Balance the back button
+        }
+        
+        Rectangle { height: 20px; }
+        
+        // Album path selection
+        VerticalBox {
+            spacing: 10px;
+            
+            Text {
+                text: "Album Path";
+                font-size: 14px;
+                font-weight: 500;
+            }
+            
+            HorizontalBox {
+                spacing: 10px;
+                
+                LineEdit {
+                    text <=> album_path;
+                    placeholder-text: "Select a folder containing photos...";
+                    read-only: true;
+                    horizontal-stretch: 1;
+                }
+                
+                Button {
+                    text: "Browse...";
+                    clicked => { browse-clicked(); }
+                }
+            }
+        }
+        
+        // Status
+        if photo_count > 0: Text {
+            text: "Found " + photo_count + " photos";
+            font-size: 14px;
+            color: #4CAF50;
+        }
+        
+        Rectangle { height: 20px; }
+        
+        // Action buttons
+        HorizontalBox {
+            alignment: center;
+            spacing: 20px;
+            
+            Button {
+                text: "Load Photos";
+                primary: true;
+                enabled: album_path != "" && photo_count > 0;
+                clicked => { load-clicked(); }
+            }
+        }
+        
+        // Spacer
+        Rectangle { vertical-stretch: 1; }
+        
+        // Instructions
+        VerticalBox {
+            spacing: 10px;
+            
+            Text {
+                text: "Instructions:";
+                font-size: 14px;
+                font-weight: 600;
+            }
+            
+            Text {
+                text: "1. Click 'Browse' to select a folder";
+                font-size: 12px;
+                color: #666;
+            }
+            
+            Text {
+                text: "2. Click 'Load Photos' to import images";
+                font-size: 12px;
+                color: #666;
+            }
+            
+            Text {
+                text: "Supported formats: JPG, PNG, GIF, BMP, WebP";
+                font-size: 11px;
+                color: #999;
+            }
+        }
+    }
+}
+

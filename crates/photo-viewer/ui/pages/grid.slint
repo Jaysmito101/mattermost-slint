@@ -1,0 +1,152 @@
+import { VerticalBox, HorizontalBox, Button, ScrollView } from "std-widgets.slint";
+import { PhotoData } from "../store.slint";
+
+component PhotoItem {
+    in property <PhotoData> photo;
+    in property <bool> selected: false;
+    callback clicked();
+    
+    Rectangle {
+        width: 100%;
+        height: 80px;
+        border-width: selected ? 2px : 1px;
+        border-color: selected ? #2196F3 : #ddd;
+        border-radius: 4px;
+        background: selected ? #e3f2fd : white;
+        
+        TouchArea {
+            clicked => { root.clicked(); }
+        }
+        
+        HorizontalLayout {
+            padding: 15px;
+            spacing: 15px;
+            
+            // Icon
+            Text {
+                text: "📷";
+                font-size: 32px;
+                vertical-alignment: center;
+            }
+            
+            // Filename
+            Text {
+                text: photo.filename;
+                font-size: 14px;
+                vertical-alignment: center;
+                overflow: elide;
+                horizontal-stretch: 1;
+            }
+            
+            // Index badge
+            Rectangle {
+                width: 40px;
+                height: 30px;
+                border-radius: 4px;
+                background: #f0f0f0;
+                
+                Text {
+                    text: "#" + (photo.index + 1);
+                    font-size: 12px;
+                    color: #666;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}
+
+export component GridPage {
+    in property <[PhotoData]> photos: [];
+    in property <int> current_index: 0;
+    
+    callback photo-clicked(int);
+    callback back-clicked();
+    callback reimport-clicked();
+    
+    VerticalLayout {
+        spacing: 0;
+        
+        // Top Toolbar
+        Rectangle {
+            height: 60px;
+            background: #f8f9fa;
+            
+            HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 15px;
+                
+                // Back button
+                Button {
+                    text: "← Back";
+                    width: 100px;
+                    clicked => { back-clicked(); }
+                }
+                
+                // Title
+                Text {
+                    text: "Photo List (" + photos.length + " photos)";
+                    font-size: 16px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                }
+                
+                Rectangle { horizontal-stretch: 1; }
+                
+                // Reimport button
+                Button {
+                    text: "Import Different Album";
+                    clicked => { reimport-clicked(); }
+                }
+            }
+        }
+        
+        // Main content area - Simple list of photos
+        Rectangle {
+            background: white;
+            
+            if photos.length == 0: VerticalLayout {
+                alignment: center;
+                
+                Text {
+                    text: "No photos found";
+                    font-size: 18px;
+                    color: #999;
+                    horizontal-alignment: center;
+                }
+                
+                Rectangle { height: 20px; }
+                
+                Button {
+                    text: "Import Photos";
+                    primary: true;
+                    clicked => { reimport-clicked(); }
+                }
+            }
+            
+            if photos.length > 0: ScrollView {
+                width: 100%;
+                height: 100%;
+                
+                VerticalLayout {
+                    padding: 20px;
+                    spacing: 10px;
+                    
+                    // Simple list of all photos
+                    for photo[index] in photos: PhotoItem {
+                        photo: photo;
+                        selected: current_index == index;
+                        
+                        clicked => {
+                            photo-clicked(index);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
