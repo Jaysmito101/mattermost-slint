@@ -1,0 +1,41 @@
+import { VerticalBox, Button } from "std-widgets.slint";
+
+export component WelcomePage {
+    callback start-clicked();
+    
+    VerticalBox {
+        alignment: center;
+        
+        Text {
+            text: "📷 Photo Viewer";
+            font-size: 48px;
+            font-weight: 700;
+            horizontal-alignment: center;
+        }
+        
+        Text {
+            text: "A modern photo viewer built with Slint and Rust";
+            font-size: 16px;
+            color: #666;
+            horizontal-alignment: center;
+        }
+        
+        Rectangle { height: 40px; }
+        
+        Button {
+            text: "Open Album";
+            primary: true;
+            clicked => { start-clicked(); }
+        }
+        
+        Rectangle { height: 20px; }
+        
+        Text {
+            text: "Click to browse for a folder containing photos";
+            font-size: 12px;
+            color: #999;
+            horizontal-alignment: center;
+        }
+    }
+}
+

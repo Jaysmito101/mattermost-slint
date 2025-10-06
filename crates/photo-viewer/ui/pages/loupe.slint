@@ -1,0 +1,98 @@
+import { VerticalBox, HorizontalBox, Button } from "std-widgets.slint";
+import { PhotoData } from "../store.slint";
+
+export component LoupePage {
+    in property <PhotoData> current_photo: { filename: "", path: "", index: 0 };
+    in property <int> total_photos: 0;
+    in property <bool> has_prev: false;
+    in property <bool> has_next: false;
+    
+    callback back-clicked();
+    callback prev-clicked();
+    callback next-clicked();
+    
+    VerticalBox {
+        padding: 20px;
+        spacing: 20px;
+        
+        // Header with navigation
+        HorizontalBox {
+            Button {
+                text: "← Back to Grid";
+                clicked => { back-clicked(); }
+            }
+            
+            Rectangle { horizontal-stretch: 1; }
+            
+            Text {
+                text: (current_photo.index + 1) + " / " + total_photos;
+                font-size: 16px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            
+            Rectangle { horizontal-stretch: 1; }
+            
+            HorizontalBox {
+                spacing: 10px;
+                
+                Button {
+                    text: "← Previous";
+                    enabled: has_prev;
+                    clicked => { prev-clicked(); }
+                }
+                
+                Button {
+                    text: "Next →";
+                    enabled: has_next;
+                    clicked => { next-clicked(); }
+                }
+            }
+        }
+        
+        // Image display
+        Rectangle {
+            background: #000;
+            border-radius: 8px;
+            vertical-stretch: 1;
+            
+            // Image placeholder - centered
+            Rectangle {
+                width: min(parent.width * 0.9, 800px);
+                height: min(parent.height * 0.9, 600px);
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                background: #222;
+                
+                Text {
+                    text: "🖼️";
+                    font-size: 96px;
+                    color: #666;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        
+        // Info bar
+        HorizontalBox {
+            spacing: 20px;
+            
+            Text {
+                text: current_photo.filename;
+                font-size: 14px;
+                font-weight: 500;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+            }
+            
+            Text {
+                text: "Path: " + current_photo.path;
+                font-size: 12px;
+                color: #666;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
