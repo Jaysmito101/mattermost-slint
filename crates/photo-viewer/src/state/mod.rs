@@ -1,5 +1,7 @@
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 mod actions;
@@ -32,7 +34,7 @@ pub struct PhotoState {
     pub album_path: Option<PathBuf>,
     pub photos: Vec<PhotoInfo>,
     pub current_index: usize,
-    pub is_loading: bool,
+    // Note: Use UiState::is_loading for loading indicators
 }
 
 #[derive(Clone, Debug)]
@@ -40,7 +42,6 @@ pub struct PhotoInfo {
     pub path: PathBuf,
     pub filename: String,
     pub size_bytes: u64,
-    pub dimensions: Option<(u32, u32)>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -49,67 +50,124 @@ pub struct UiState {
     pub error_message: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum Page {
+    #[default]
     Welcome,
     Import,
     Grid,
     Loupe,
 }
 
-impl Default for Page {
-    fn default() -> Self {
-        Page::Welcome
+impl From<&Page> for crate::AppPage {
+    fn from(page: &Page) -> Self {
+        match page {
+            Page::Welcome => crate::AppPage::Welcome,
+            Page::Import => crate::AppPage::Import,
+            Page::Grid => crate::AppPage::Grid,
+            Page::Loupe => crate::AppPage::Loupe,
+        }
+    }
+}
+
+/// Subscription handle for cleanup
+/// When dropped, automatically unsubscribes
+pub struct Subscription {
+    id: usize,
+    store: Arc<StoreInner>,
+}
+
+impl Drop for Subscription {
+    fn drop(&mut self) {
+        self.store.unsubscribe(self.id);
     }
 }
 
 pub struct Store {
-    state: Arc<RwLock<AppState>>,
-    subscribers: Arc<RwLock<Vec<Subscriber>>>,
+    inner: Arc<StoreInner>,
 }
 
-type Subscriber = Box<dyn Fn(&AppState) + Send + Sync>;
+struct StoreInner {
+    state: RwLock<Arc<AppState>>,
+    subscribers: RwLock<HashMap<usize, Subscriber>>,
+    next_id: AtomicUsize,
+}
+
+// Use Arc instead of Box to make it cloneable (prevents deadlock in dispatch)
+type Subscriber = Arc<dyn Fn(Arc<AppState>) + Send + Sync>;
 
 impl Store {
     pub fn new() -> Self {
         Self {
-            state: Arc::new(RwLock::new(AppState::default())),
-            subscribers: Arc::new(RwLock::new(Vec::new())),
+            inner: Arc::new(StoreInner {
+                state: RwLock::new(Arc::new(AppState::default())),
+                subscribers: RwLock::new(HashMap::new()),
+                next_id: AtomicUsize::new(0),
+            }),
         }
     }
 
     pub fn dispatch(&self, action: StateAction) {
-        let mut state = self.state.write();
+        // Clone current state Arc for mutation
+        let new_state = {
+            let current = self.inner.state.read();
+            let mut new_state = (**current).clone();
 
-        match action {
-            StateAction::Navigation(nav_action) => {
-                Self::reduce_navigation(&mut state.navigation, nav_action);
+            // Apply reducers to mutable copy
+            match action {
+                StateAction::Navigation(nav_action) => {
+                    Self::reduce_navigation(&mut new_state.navigation, nav_action);
+                }
+                StateAction::Photos(photo_action) => {
+                    Self::reduce_photos(&mut new_state.photos, photo_action);
+                }
+                StateAction::Ui(ui_action) => {
+                    Self::reduce_ui(&mut new_state.ui, ui_action);
+                }
             }
-            StateAction::Photos(photo_action) => {
-                Self::reduce_photos(&mut state.photos, photo_action);
-            }
-            StateAction::Ui(ui_action) => {
-                Self::reduce_ui(&mut state.ui, ui_action);
-            }
+
+            Arc::new(new_state)
+        };
+
+        // Update store with new immutable state
+        *self.inner.state.write() = new_state.clone();
+
+        // Clone subscribers to release lock before calling them
+        // This prevents deadlock if a subscriber calls dispatch()
+        let subscribers: Vec<_> = {
+            let subs = self.inner.subscribers.read();
+            subs.values().cloned().collect()
+        };
+
+        // Notify all subscribers without holding any locks
+        for subscriber in subscribers {
+            subscriber(new_state.clone());
         }
+    }
 
-        let current_state = state.clone();
-        drop(state);
+    /// Subscribe to state changes. Returns a Subscription handle that auto-unsubscribes on drop.
+    pub fn subscribe(
+        &self,
+        callback: impl Fn(Arc<AppState>) + Send + Sync + 'static,
+    ) -> Subscription {
+        let id = self.inner.next_id.fetch_add(1, Ordering::SeqCst);
+        self.inner
+            .subscribers
+            .write()
+            .insert(id, Arc::new(callback));
 
-        let subscribers = self.subscribers.read();
-        for subscriber in subscribers.iter() {
-            subscriber(&current_state);
+        Subscription {
+            id,
+            store: self.inner.clone(),
         }
     }
 
-    pub fn subscribe(&self, callback: impl Fn(&AppState) + Send + Sync + 'static) {
-        self.subscribers.write().push(Box::new(callback));
+    /// Get current state as an Arc
+    pub fn get_state(&self) -> Arc<AppState> {
+        self.inner.state.read().clone()
     }
 
-    pub fn get_state(&self) -> AppState {
-        self.state.read().clone()
-    }
-
+    // Private reducer functions
     fn reduce_navigation(state: &mut NavigationState, action: NavigationAction) {
         match action {
             NavigationAction::NavigateTo(page) => {
@@ -141,17 +199,12 @@ impl Store {
                 state.photos.clear();
                 state.current_index = 0;
             }
-            PhotoAction::LoadPhotosStart => {
-                state.is_loading = true;
-            }
+            PhotoAction::LoadPhotosStart => {}
             PhotoAction::LoadPhotosSuccess(photos) => {
                 state.photos = photos;
-                state.is_loading = false;
                 state.current_index = 0;
             }
-            PhotoAction::LoadPhotosFailure => {
-                state.is_loading = false;
-            }
+            PhotoAction::LoadPhotosFailure => {}
             PhotoAction::SelectPhoto(index) => {
                 if index < state.photos.len() {
                     state.current_index = index;
@@ -159,12 +212,26 @@ impl Store {
             }
             PhotoAction::NextPhoto => {
                 if !state.photos.is_empty() && state.current_index < state.photos.len() - 1 {
+                    tracing::info!(
+                        "Next photo: {} → {}",
+                        state.current_index,
+                        state.current_index + 1
+                    );
                     state.current_index += 1;
+                } else {
+                    tracing::debug!("Already at last photo (index: {})", state.current_index);
                 }
             }
             PhotoAction::PreviousPhoto => {
                 if state.current_index > 0 {
+                    tracing::info!(
+                        "Previous photo: {} → {}",
+                        state.current_index,
+                        state.current_index - 1
+                    );
                     state.current_index -= 1;
+                } else {
+                    tracing::debug!("Already at first photo");
                 }
             }
             PhotoAction::ClearAlbum => {
@@ -190,6 +257,13 @@ impl Store {
                 state.error_message = None;
             }
         }
+    }
+}
+
+impl StoreInner {
+    fn unsubscribe(&self, id: usize) {
+        self.subscribers.write().remove(&id);
+        tracing::debug!("Unsubscribed: id={}", id);
     }
 }
 

@@ -1,7 +1,5 @@
 use super::impls::*;
 use super::traits::*;
-use crate::error::Result;
-use crate::state::Store;
 use std::sync::Arc;
 
 /// Service container for dependency injection
@@ -9,20 +7,14 @@ use std::sync::Arc;
 pub struct ServiceContainer {
     filesystem: Arc<dyn FileSystemService>,
     image: Arc<dyn ImageService>,
-    store: Arc<Store>,
 }
 
 impl ServiceContainer {
-    /// Create a new service container
-    pub fn new(store: Arc<Store>) -> Result<Self> {
+    pub fn new() -> Self {
         let filesystem = Arc::new(FileSystemServiceImpl::new());
         let image = Arc::new(ImageServiceImpl::new());
 
-        Ok(Self {
-            filesystem,
-            image,
-            store,
-        })
+        Self { filesystem, image }
     }
 
     // Service accessors
@@ -33,8 +25,10 @@ impl ServiceContainer {
     pub fn image(&self) -> Arc<dyn ImageService> {
         self.image.clone()
     }
+}
 
-    pub fn store(&self) -> Arc<Store> {
-        self.store.clone()
+impl Default for ServiceContainer {
+    fn default() -> Self {
+        Self::new()
     }
 }

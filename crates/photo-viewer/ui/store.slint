@@ -1,3 +1,7 @@
+// ============================================================================
+// DATA TYPES
+// ============================================================================
+
 // Page enumeration
 export enum AppPage {
     Welcome,
@@ -19,6 +23,12 @@ export struct AlbumData {
     photo_count: int,
 }
 
+
+// ============================================================================
+// DATA STORES (Updated by UiBridge ONLY)
+// Single source of truth - synced from Rust Store
+// ============================================================================
+
 // Global navigation store
 export global NavStore {
     in-out property <AppPage> current_page: AppPage.Welcome;
@@ -31,47 +41,34 @@ export global PhotoStore {
     in-out property <AlbumData> album: { path: "", photo_count: 0 };
     in-out property <[PhotoData]> photos: [];
     in-out property <int> current_index: 0;
-    
-    // Callbacks
-    callback photos_loaded([PhotoData]);
 }
 
-// Import page store with callbacks
+// ============================================================================
+// PAGE CALLBACK STORES (Wire UI events to ViewModels)
+// ONLY callbacks - no state
+// ============================================================================
+
+// Welcome page callbacks
+export global WelcomePageStore {
+    callback start_clicked();
+}
+
+// Import page callbacks
 export global ImportPageStore {
     callback browse_clicked();
-    callback load_clicked();
+    callback load_clicked(string);  // Pass album_path from UI
+    callback back_clicked();
 }
 
-// Virtual item data for grid
-export struct VirtualItemData {
-    index: int,
-    start: float,      // y position
-    height: float,       // height
-    width: float,       // width
-    row: int,
-    column: int,
-}
-
-// Grid page store with callbacks and virtual scrolling
+// Grid page callbacks
 export global GridPageStore {
-    // Virtual scrolling properties
-    in-out property <[VirtualItemData]> visible_items: [];
-    in-out property <float> total_size: 0;
-    in-out property <float> zoom: 1.0;
-    in-out property <float> scroll_offset: 0;
-    in-out property <int> columns: 4;
-    in-out property <float> gap: 8;
-    
     // Callbacks
     callback photo_clicked(int);
     callback back_clicked();
     callback reimport_clicked();
-    callback scroll_changed(float);
-    callback zoom_changed(float);
-    callback viewport_changed(float, float);
 }
 
-// Loupe page store with callbacks
+// Loupe page callbacks
 export global LoupePageStore {
     callback back_clicked();
     callback prev_clicked();

@@ -1,52 +1,57 @@
-import { VerticalBox, HorizontalBox, Button, ScrollView, Slider } from "std-widgets.slint";
-import { PhotoData, GridPageStore } from "../store.slint";
+import { VerticalBox, HorizontalBox, Button, ScrollView } from "std-widgets.slint";
+import { PhotoData } from "../store.slint";
 
-component PhotoThumbnail {
+component PhotoItem {
     in property <PhotoData> photo;
     in property <bool> selected: false;
-    in property <float> item-width: 280;
-    in property <float> item-height: 200;
     callback clicked();
-    
-    width: item-width * 1px;
-    height: item-height * 1px;
     
     Rectangle {
         width: 100%;
-        height: 100%;
-        border-width: selected ? 3px : 1px;
+        height: 80px;
+        border-width: selected ? 2px : 1px;
         border-color: selected ? #2196F3 : #ddd;
         border-radius: 4px;
-        background: #f5f5f5;
+        background: selected ? #e3f2fd : white;
         
         TouchArea {
             clicked => { root.clicked(); }
         }
         
-        VerticalBox {
-            padding: 10px;
-            spacing: 8px;
+        HorizontalLayout {
+            padding: 15px;
+            spacing: 15px;
             
-            // Image placeholder (will be replaced with actual images)
-            Rectangle {
-                height: (item-height - 50) * 1px;
-                background: #e0e0e0;
-                border-radius: 4px;
-                
-                Text {
-                    text: "🖼️";
-                    font-size: 48px * GridPageStore.zoom;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                }
+            // Icon
+            Text {
+                text: "📷";
+                font-size: 32px;
+                vertical-alignment: center;
             }
             
             // Filename
             Text {
                 text: photo.filename;
-                font-size: 12px;
-                horizontal-alignment: center;
+                font-size: 14px;
+                vertical-alignment: center;
                 overflow: elide;
+                horizontal-stretch: 1;
+            }
+            
+            // Index badge
+            Rectangle {
+                width: 40px;
+                height: 30px;
+                border-radius: 4px;
+                background: #f0f0f0;
+                
+                Text {
+                    text: "#" + (photo.index + 1);
+                    font-size: 12px;
+                    color: #666;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
             }
         }
     }
@@ -84,43 +89,13 @@ export component GridPage {
                 
                 // Title
                 Text {
-                    text: "Photo Grid (" + photos.length + " photos)";
+                    text: "Photo List (" + photos.length + " photos)";
                     font-size: 16px;
                     font-weight: 600;
                     vertical-alignment: center;
                 }
                 
                 Rectangle { horizontal-stretch: 1; }
-                
-                // Zoom controls
-                HorizontalLayout {
-                    spacing: 10px;
-                    
-                    Text {
-                        text: "Zoom:";
-                        vertical-alignment: center;
-                    }
-                    
-                    Text {
-                        text: Math.round(GridPageStore.zoom * 100) + "%";
-                        font-weight: 600;
-                        vertical-alignment: center;
-                        min-width: 50px;
-                    }
-                    
-                    Slider {
-                        width: 150px;
-                        minimum: 0.5;
-                        maximum: 3.0;
-                        value <=> GridPageStore.zoom;
-                        
-                        changed(value) => {
-                            GridPageStore.zoom_changed(value);
-                        }
-                    }
-                }
-                
-                Rectangle { width: 20px; }
                 
                 // Reimport button
                 Button {
@@ -130,7 +105,7 @@ export component GridPage {
             }
         }
         
-        // Main content area - Maximum space for grid
+        // Main content area - Simple list of photos
         Rectangle {
             background: white;
             
@@ -156,42 +131,20 @@ export component GridPage {
             if photos.length > 0: ScrollView {
                 width: 100%;
                 height: 100%;
-                viewport-width: self.visible-width;
-                viewport-height: GridPageStore.total_size * 1px;
                 
-                // Virtual grid container
-                Rectangle {
-                    height: GridPageStore.total_size * 1px;
-                    background: white;
+                VerticalLayout {
+                    padding: 20px;
+                    spacing: 10px;
                     
-                    // Render only visible items from VirtualGrid
-                    for vitem in GridPageStore.visible_items: Rectangle {
-                        // Calculate item position based on virtual grid data
-                        property <length> item-width-calc: ((parent.width / 1px) / GridPageStore.columns - GridPageStore.gap * 2) * 1px;
-                        property <length> col-width: ((parent.width / 1px) / GridPageStore.columns) * 1px;
+                    // Simple list of all photos
+                    for photo[index] in photos: PhotoItem {
+                        photo: photo;
+                        selected: current_index == index;
                         
-                        x: (vitem.column * col-width) + ((vitem.column + 1) * GridPageStore.gap * 1px);
-                        y: vitem.start * 1px;
-                        width: item-width-calc;
-                        
-                        // Render photo if index is valid
-                        if vitem.index >= 0 && vitem.index < photos.length: PhotoThumbnail {
-                            photo: photos[vitem.index];
-                            selected: current_index == vitem.index;
-                            item-height: vitem.height;
-                            item-width: vitem.width;
-                            
-                            clicked => {
-                                photo-clicked(vitem.index);
-                            }
+                        clicked => {
+                            photo-clicked(index);
                         }
                     }
-                }
-                
-                // Handle scroll - viewport-y is negative
-                scrolled() => {
-                    GridPageStore.scroll_changed(-self.viewport-y / 1px);
-                    GridPageStore.viewport_changed(self.visible-width / 1px, self.visible-height / 1px);
                 }
             }
         }

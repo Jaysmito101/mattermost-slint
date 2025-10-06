@@ -1,5 +1,5 @@
 import { VerticalBox } from "std-widgets.slint";
-import { NavStore, PhotoStore, ImportPageStore, GridPageStore, LoupePageStore, AppPage } from "store.slint";
+import { NavStore, PhotoStore, WelcomePageStore, ImportPageStore, GridPageStore, LoupePageStore, AppPage } from "store.slint";
 import { WelcomePage } from "pages/welcome.slint";
 import { ImportPage } from "pages/import.slint";
 import { GridPage } from "pages/grid.slint";
@@ -14,7 +14,7 @@ export component Main inherits Window {
     // Welcome Page
     if NavStore.current_page == AppPage.Welcome: WelcomePage {
         start-clicked => {
-            NavStore.current_page = AppPage.Import;
+            WelcomePageStore.start_clicked();
         }
     }
     
@@ -28,11 +28,12 @@ export component Main inherits Window {
         }
         
         load-clicked => {
-            ImportPageStore.load_clicked();
+            // Pass album_path from UI to ViewModel
+            ImportPageStore.load_clicked(PhotoStore.album.path);
         }
         
         back-clicked => {
-            NavStore.current_page = AppPage.Welcome;
+            ImportPageStore.back_clicked();
         }
     }
     
@@ -103,5 +104,5 @@ export component Main inherits Window {
     }
 }
 
-export { NavStore, PhotoStore, ImportPageStore, GridPageStore, LoupePageStore }
+export { NavStore, PhotoStore, WelcomePageStore, ImportPageStore, GridPageStore, LoupePageStore }
 

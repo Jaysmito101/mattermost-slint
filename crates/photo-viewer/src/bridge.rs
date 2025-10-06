@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::state::{AppState, Page, Store};
+use crate::state::{AppState, Store, Subscription};
 use slint::ComponentHandle;
 use std::sync::Arc;
 
@@ -7,21 +7,15 @@ use std::sync::Arc;
 pub struct UiBridge {
     ui: slint::Weak<crate::Main>,
     store: Arc<Store>,
+    _subscription: Subscription,
 }
 
 impl UiBridge {
     pub fn new(ui: slint::Weak<crate::Main>, store: Arc<Store>) -> Self {
-        let bridge = Self {
-            ui: ui.clone(),
-            store: store.clone(),
-        };
-
         // Subscribe to state changes and update UI
-        store.subscribe({
+        let subscription = store.subscribe({
             let ui = ui.clone();
-            move |state| {
-                // Clone state for the closure
-                let state = state.clone();
+            move |state: Arc<AppState>| {
                 let ui = ui.clone();
 
                 // Use invoke_from_event_loop to ensure UI updates happen on the correct thread
@@ -33,7 +27,11 @@ impl UiBridge {
             }
         });
 
-        bridge
+        Self {
+            ui: ui.clone(),
+            store: store.clone(),
+            _subscription: subscription,
+        }
     }
 
     /// Sync state to UI (single source of truth)
@@ -47,12 +45,7 @@ impl UiBridge {
         // Update navigation state
         let nav_store = ui.global::<crate::NavStore>();
 
-        let slint_page = match &state.navigation.current_page {
-            Page::Welcome => crate::AppPage::Welcome,
-            Page::Import => crate::AppPage::Import,
-            Page::Grid => crate::AppPage::Grid,
-            Page::Loupe => crate::AppPage::Loupe,
-        };
+        let slint_page = crate::AppPage::from(&state.navigation.current_page);
 
         tracing::debug!(
             "UI Bridge: Syncing page to {:?}",

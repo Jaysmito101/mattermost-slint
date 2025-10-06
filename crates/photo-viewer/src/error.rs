@@ -17,9 +17,6 @@ pub enum Error {
     #[error("UI Upgrade Failed")]
     UiUpgradeFailed,
 
-    #[error("Channel Error")]
-    ChannelError,
-
     #[error("Invalid Path: {0}")]
     InvalidPath(String),
 

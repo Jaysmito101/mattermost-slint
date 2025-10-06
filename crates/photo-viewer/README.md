@@ -29,24 +29,27 @@ crates/photo-viewer/
 │   ├── main.rs           # Entry point
 │   ├── lib.rs            # App initialization
 │   ├── error.rs          # Error types
-|   |── constants.rs      # App constants
+│   ├── constants.rs      # App constants
 │   │
 │   ├── state/            # State management (Redux-like)
 │   │   ├── mod.rs        # Store, reducers
-│   │   └── actions.rs    # State actions
+│   │   └── actions.rs    # State action types
 │   │
-│   ├── services/         # Service layer
+│   ├── services/         # Domain services & business workflows
 │   │   ├── traits.rs     # Service trait definitions
 │   │   ├── container.rs  # DI container
+│   │   ├── photos.rs     # Photo management workflows
 │   │   └── impls/        # Service implementations
 │   │       ├── filesystem.rs  # File browsing, loading
 │   │       └── image_service.rs  # Image loading, thumbnails
 │   │
-│   ├── viewmodels/       # Business logic (MVVM)
-│   │   ├── mod.rs
-│   │   └── import_page.rs
+│   ├── viewmodels/       # Presenters (MVVM)
+│   │   ├── mod.rs        # Wire UI callbacks
+│   │   ├── welcome_page.rs
+│   │   ├── import_page.rs
+│   │   ├── grid_page.rs
+│   │   └── loupe_page.rs
 │   │
-│   ├── router.rs         # Navigation router
 │   └── bridge.rs         # UI Bridge (state → UI sync)
 │
 └── ui/                   # Slint UI files
@@ -70,22 +73,23 @@ crates/photo-viewer/
 - Sends events to ViewModels
 
 #### **Model Layer (Rust)**
-- **State**: Centralized in Store
-- **Services**: File system, image loading
-- **ViewModels**: Orchestrate services, dispatch actions
-- **Router**: Handle navigation
+- **State**: Centralized store with reducers
+- **Services**: Domain operations & business workflows
+- **ViewModels**: Wire UI callbacks, spawn async workflows
 - **UI Bridge**: Sync state → UI (one-way data flow)
 
-### **Data Flow**
+### **Data Flow (Clean Architecture)**
 
 ```
-User Action (Slint)
+User Action (Slint UI)
     ↓
-ViewModel (async handler)
+ViewModel (wire callback, spawn task)
     ↓
-Service call (filesystem, image)
+Service workflow (async operations)
     ↓
-Dispatch action
+Service implementations (filesystem, image)
+    ↓
+Dispatch state actions
     ↓
 Store (reducer updates state)
     ↓
@@ -137,30 +141,53 @@ let dimensions = container.image()
     .await?;
 ```
 
-### 3. **ViewModels**
+### 3. **Service Workflows**
 
-Orchestrate services and dispatch actions:
+Business workflows that orchestrate service implementations:
 
 ```rust
-async fn load_photos(
+// services/photos.rs
+pub async fn load_photos_from_path(
     container: Arc<ServiceContainer>,
     store: Arc<Store>,
     path: PathBuf,
 ) -> Result<()> {
+    // Show loading
     store.dispatch(StateAction::show_loading());
     
+    // Call service
     let photos = container.filesystem()
         .load_photos_from_directory(&path)
         .await?;
     
+    // Update state
     store.dispatch(StateAction::load_photos_success(photos));
     store.dispatch(StateAction::hide_loading());
+    
+    // Navigate
+    if !photos.is_empty() {
+        store.dispatch(StateAction::navigate_to(Page::Grid));
+    }
     
     Ok(())
 }
 ```
 
-### 4. **UI Bridge**
+### 4. **ViewModels**
+
+Wire UI callbacks to spawn service workflows:
+
+```rust
+// viewmodels/import_page.rs
+import_store.on_load_clicked(move |album_path| {
+    let path = PathBuf::from(album_path.as_str());
+    tokio::spawn(async move {
+        photos::load_photos_from_path(container, store, path).await
+    });
+});
+```
+
+### 5. **UI Bridge**
 
 Single point where state syncs to UI:
 
@@ -245,6 +272,23 @@ Button {
 
 1. Read the state definitions in `src/state/`
 2. Study the service traits in `src/services/traits.rs`
-3. Look at ViewModels in `src/viewmodels/`
-4. Understand UI Bridge in `src/bridge.rs`
-5. See how it all connects in `src/lib.rs`
+3. **Look at service workflows in `src/services/photos.rs`** - business workflows
+4. See how ViewModels wire callbacks in `src/viewmodels/`
+5. Understand UI Bridge in `src/bridge.rs`
+6. See how it all connects in `src/lib.rs`
+
+## Architecture Layers
+
+```
+┌─────────────────────────────────────┐
+│ UI Layer (ui/)                      │  Slint components, pure presentation
+├─────────────────────────────────────┤
+│ Presentation (viewmodels/)          │  Wire callbacks, spawn tasks
+├─────────────────────────────────────┤
+│ Services (services/)                │  Business workflows & domain operations
+│   - photos.rs                       │  Photo management workflows
+│   - impls/                          │  FileSystem, Image implementations
+├─────────────────────────────────────┤
+│ State (state/)                      │  Store, Reducers, Action types
+└─────────────────────────────────────┘
+```

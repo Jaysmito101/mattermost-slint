@@ -78,7 +78,7 @@ export component ImportPage {
             Button {
                 text: "Load Photos";
                 primary: true;
-                enabled: album_path != "";
+                enabled: album_path != "" && photo_count > 0;
                 clicked => { load-clicked(); }
             }
         }

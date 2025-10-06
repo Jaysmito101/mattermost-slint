@@ -21,10 +21,4 @@ pub trait FileSystemService: Send + Sync {
 pub trait ImageService: Send + Sync {
     /// Load image data for display
     async fn load_image(&self, path: &Path) -> Result<Vec<u8>>;
-
-    /// Get image dimensions without loading full image
-    async fn get_image_dimensions(&self, path: &Path) -> Result<(u32, u32)>;
-
-    /// Generate thumbnail
-    async fn generate_thumbnail(&self, path: &Path, max_size: u32) -> Result<Vec<u8>>;
 }
